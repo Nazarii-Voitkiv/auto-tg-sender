@@ -1,0 +1,261 @@
+:host {
+  display: block;
+  width: 100%;
+  background-color: #17212b;
+}
+
+.groups-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: #17212b;
+  box-sizing: border-box;
+  overflow-x: hidden;
+
+  .group-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 20px;
+
+    .group-input {
+      width: 100%;
+    }
+
+    .full-width-button {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+    }
+  }
+
+  table {
+    width: 100%;
+    background-color: #17212b;
+
+    .delete-button {
+      color: #ff4444;
+      cursor: pointer;
+      font-size: 18px;
+      font-weight: bold;
+      padding: 4px 8px;
+      
+      &:hover {
+        color: #ff0000;
+      }
+    }
+  }
+}
+
+mat-card {
+  background-color: #242f3d;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+mat-card-header {
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+mat-card-title {
+  margin: 0;
+  font-size: 1.4em;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+mat-card-content {
+  padding: 0;
+}
+
+mat-form-field {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+textarea {
+  background-color: #232f3d !important;
+  border-radius: 8px;
+  padding: 16px !important;
+  color: #ffffff !important;
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  min-height: 120px;
+}
+
+::ng-deep {
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+    background-color: transparent !important;
+  }
+
+  .mat-mdc-form-field-focus-overlay {
+    background-color: transparent !important;
+  }
+
+  .mdc-text-field {
+    padding: 0 !important;
+  }
+
+  .mat-mdc-form-field-infix {
+    padding: 0 !important;
+    min-height: auto !important;
+  }
+
+  .mat-mdc-form-field-has-value .mat-mdc-floating-label,
+  .mat-mdc-text-field-wrapper:focus-within .mat-mdc-floating-label {
+    display: none;
+  }
+
+  .mdc-floating-label--float-above {
+    display: none !important;
+  }
+
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+
+  .mat-mdc-text-field-wrapper {
+    background-color: #242f3d !important;
+  }
+
+  .mat-mdc-form-field-focus-overlay {
+    background-color: #242f3d;
+  }
+
+  .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+    background-color: #242f3d;
+  }
+
+  .mat-mdc-table {
+    background-color: #17212b !important;
+    color: #ffffff !important;
+  }
+
+  .mdc-data-table__header-cell {
+    color: #ffffff !important;
+    background-color: #242f3d !important;
+  }
+
+  .mat-mdc-row:nth-child(even) {
+    background-color: #242f3d;
+  }
+
+  .mat-mdc-row:nth-child(odd) {
+    background-color: #17212b;
+  }
+
+  // Стилі для плейсхолдера
+  .mdc-floating-label {
+    margin-left: 16px !important;
+  }
+
+  .mdc-floating-label--float-above {
+    margin-left: 0px !important;
+  }
+
+  .mat-mdc-form-field-infix {
+    padding-left: 16px !important;
+  }
+}
+
+.page-title {
+  margin: 16px 0;
+  padding: 0;
+  color: #ffffff;
+  text-align: center;
+  font-size: 1.8em;
+  font-weight: 500;
+  font-family: inherit;
+}
+
+table {
+  width: 100%;
+  border-radius: 0;
+  background-color: #17212b;
+  font-family: inherit;
+  table-layout: fixed;
+}
+
+.mat-mdc-table {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.mat-mdc-header-row {
+  background-color: #232f3d !important;
+}
+
+.mat-mdc-row {
+  background-color: #17212b !important;
+}
+
+.mat-mdc-header-cell {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  font-family: inherit !important;
+}
+
+.mat-mdc-cell {
+  color: #ffffff !important;
+  font-family: inherit !important;
+  cursor: pointer;
+}
+
+td.mat-mdc-cell {
+  border-bottom-color: #242f3d !important;
+}
+
+.mat-column-text {
+  width: 50%;
+  padding-right: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.expanded {
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
+.mat-column-created {
+  width: 35%;
+  white-space: normal;
+}
+
+.date-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.time {
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.date {
+  font-size: 12px;
+  color: #8e99a5;
+}
+
+.mat-column-actions {
+  width: 15%;
+  text-align: center;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.delete-button {
+  color: #e53935;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  user-select: none;
+}
