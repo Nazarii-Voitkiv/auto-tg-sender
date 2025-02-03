@@ -3,8 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
+    "config": "chmod +x env.sh && ./env.sh",
+    "start": "npm run config && ng serve",
+    "build": "npm run config && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
