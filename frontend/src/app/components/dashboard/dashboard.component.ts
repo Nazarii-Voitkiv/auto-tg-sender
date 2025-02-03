@@ -5,7 +5,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { ApiService } from '../../services/api.service';
 import { EnvVars } from '../../interfaces/env.interface';
 
@@ -18,8 +17,7 @@ import { EnvVars } from '../../interfaces/env.interface';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule,
-    MatSnackBarModule
+    MatButtonModule
   ],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
@@ -29,8 +27,7 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private formBuilder: FormBuilder,
-    private apiService: ApiService,
-    private snackBar: MatSnackBar
+    private apiService: ApiService
   ) {
     this.envForm = this.formBuilder.group({
       BOT_TOKEN: ['', Validators.required],
@@ -48,8 +45,8 @@ export class DashboardComponent implements OnInit {
         this.envForm.patchValue(vars);
       },
       error: (error) => {
-        console.error('Помилка завантаження змінних:', error);
-        this.showSnackBar('Помилка завантаження змінних середовища');
+        console.error('Error loading env vars:', error);
+        alert('Error loading environment variables');
       }
     });
   }
@@ -59,21 +56,13 @@ export class DashboardComponent implements OnInit {
       const vars: EnvVars = this.envForm.value;
       this.apiService.updateEnvVars(vars).subscribe({
         next: () => {
-          this.showSnackBar('Зміни успішно збережено');
+          alert('Environment variables updated successfully');
         },
         error: (error) => {
-          console.error('Помилка оновлення змінних:', error);
-          this.showSnackBar('Помилка оновлення змінних середовища');
+          console.error('Error updating env vars:', error);
+          alert('Error updating environment variables');
         }
       });
     }
-  }
-
-  private showSnackBar(message: string): void {
-    this.snackBar.open(message, 'Закрити', {
-      duration: 3000,
-      horizontalPosition: 'center',
-      verticalPosition: 'bottom'
-    });
   }
 }

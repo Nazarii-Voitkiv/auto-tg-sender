@@ -16,8 +16,6 @@
       color: #ffffff;
       margin: 0;
       padding: 16px 0;
-      text-align: center;
-      width: 100%;
     }
 
     .env-input {
@@ -55,7 +53,6 @@ mat-card {
     background-color: #242f3d;
   }
 
-  // Стилі для плейсхолдера
   .mdc-floating-label {
     margin-left: 16px !important;
   }
@@ -66,12 +63,5 @@ mat-card {
 
   .mat-mdc-form-field-infix {
     padding-left: 16px !important;
-  }
-
-  // Стилі для snackbar
-  .mat-mdc-snack-bar-container {
-    &.mat-mdc-snack-bar-center {
-      text-align: center;
-    }
   }
 }

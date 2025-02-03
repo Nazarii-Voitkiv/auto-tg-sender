@@ -1,14 +1,12 @@
 import { Routes } from '@angular/router';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { MessagesComponent } from './components/messages/messages.component';
 import { GroupsComponent } from './components/groups/groups.component';
-import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { SettingsComponent } from './components/settings/settings.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/messages', pathMatch: 'full' },
+  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  { path: 'dashboard', component: DashboardComponent },
   { path: 'messages', component: MessagesComponent },
   { path: 'groups', component: GroupsComponent },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'settings', component: SettingsComponent },
-  { path: '**', redirectTo: '/messages' }
+  { path: '**', redirectTo: '/dashboard' }
 ];
