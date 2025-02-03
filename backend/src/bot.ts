@@ -1,80 +1,120 @@
-import TelegramBot from 'node-telegram-bot-api';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const BOT_TOKEN = process.env.BOT_TOKEN || '';
-const WEBAPP_URL = process.env.WEBAPP_URL || '';
+import { Telegraf, Context } from 'telegraf';
+import { Message } from './interfaces/message.interface';
+import { Group } from './interfaces/group.interface';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { BOT_TOKEN, WEBAPP_URL } from './config';
 
 export class Bot {
-  private bot: TelegramBot;
+  private bot: Telegraf;
+  private messagesPath = path.join(__dirname, '../src/models/messages.json');
+  private groupsPath = path.join(__dirname, '../src/models/groups.json');
   private chatIds: Set<number> = new Set();
-  private static instance: Bot;
 
-  private constructor() {
+  constructor() {
     console.log('Initializing bot with token:', BOT_TOKEN);
     console.log('WebApp URL:', WEBAPP_URL);
-    
-    this.bot = new TelegramBot(BOT_TOKEN, { 
-      polling: true,
-      filepath: false
-    });
-    this.setupCommands();
-  }
 
-  public static getInstance(): Bot {
-    if (!Bot.instance) {
-      Bot.instance = new Bot();
+    if (!BOT_TOKEN) {
+      throw new Error('BOT_TOKEN must be provided!');
     }
-    return Bot.instance;
+
+    this.bot = new Telegraf(BOT_TOKEN);
+    this.setupCommands();
+    this.setupWebApp();
   }
 
-  async sendMessageToAll(text: string): Promise<void> {
+  private setupCommands(): void {
+    this.bot.command('start', (ctx: Context) => {
+      const chatId = ctx.message?.chat.id;
+      if (chatId) {
+        this.chatIds.add(chatId);
+      }
+      ctx.reply('Вітаю! Використовуйте /send для відправки повідомлень у групи.');
+    });
+
+    this.bot.command('send', async (ctx: Context) => {
+      try {
+        const messages = await this.getMessages();
+        const groups = await this.getGroups();
+
+        for (const message of messages) {
+          for (const group of groups) {
+            try {
+              await ctx.telegram.sendMessage(group.text, message.text);
+              console.log(`Message sent to ${group.text}`);
+            } catch (error) {
+              console.error(`Error sending message to ${group.text}:`, error);
+            }
+          }
+        }
+
+        ctx.reply('Повідомлення успішно відправлені!');
+      } catch (error) {
+        console.error('Error in /send command:', error);
+        ctx.reply('Помилка відправки повідомлень.');
+      }
+    });
+  }
+
+  private setupWebApp(): void {
+    this.bot.command('webapp', (ctx: Context) => {
+      ctx.reply('Відкрити веб-додаток', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Відкрити', web_app: { url: WEBAPP_URL } }]
+          ]
+        }
+      });
+    });
+  }
+
+  private async getMessages(): Promise<Message[]> {
+    try {
+      const data = await fs.readFile(this.messagesPath, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error reading messages:', error);
+      return [];
+    }
+  }
+
+  private async getGroups(): Promise<Group[]> {
+    try {
+      const data = await fs.readFile(this.groupsPath, 'utf-8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error reading groups:', error);
+      return [];
+    }
+  }
+
+  public launch(): void {
+    this.bot.launch();
+    console.log('Bot started');
+
+    process.once('SIGINT', () => this.bot.stop('SIGINT'));
+    process.once('SIGTERM', () => this.bot.stop('SIGTERM'));
+  }
+
+  public async sendMessage(chatId: string | number, text: string): Promise<void> {
+    try {
+      await this.bot.telegram.sendMessage(chatId, text);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  }
+
+  public async sendMessageToAll(text: string): Promise<void> {
     console.log('Sending message to all chats:', text);
     for (const chatId of this.chatIds) {
       try {
-        await this.bot.sendMessage(chatId, text);
+        await this.sendMessage(chatId, text);
         console.log('Message sent to chat:', chatId);
       } catch (error) {
         console.error('Error sending message to chat:', chatId, error);
       }
     }
-  }
-
-  private setupCommands(): void {
-    // Команда /start
-    this.bot.onText(/\/start/, async (msg) => {
-      console.log('Received /start command from:', msg.from?.username);
-      const chatId = msg.chat.id;
-      
-      // Зберігаємо chatId
-      this.chatIds.add(chatId);
-      console.log('Added chat ID:', chatId);
-      console.log('Current chat IDs:', Array.from(this.chatIds));
-
-      await this.bot.sendMessage(chatId, 'Привіт! Я допоможу тобі керувати повідомленнями.', {
-        reply_markup: {
-          keyboard: [[{
-            text: 'Відкрити веб-додаток',
-            web_app: { url: WEBAPP_URL }
-          }]],
-          resize_keyboard: true
-        }
-      });
-    });
-
-    // Логуємо всі помилки
-    this.bot.on('polling_error', (error) => {
-      console.error('Polling error:', error);
-    });
-
-    this.bot.on('error', (error) => {
-      console.error('Bot error:', error);
-    });
-
-    // Логуємо всі вхідні повідомлення
-    this.bot.on('message', (msg) => {
-      console.log('Received message:', JSON.stringify(msg, null, 2));
-    });
   }
 }

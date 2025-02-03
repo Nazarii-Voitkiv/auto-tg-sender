@@ -35,8 +35,9 @@ app.use('/api/env', envRouter);
 
 const PORT = process.env.PORT || 3000;
 
-// Initialize bot using singleton pattern
-Bot.getInstance();
+// Initialize bot
+const bot = new Bot();
+bot.launch();
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

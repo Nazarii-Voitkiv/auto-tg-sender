@@ -5,7 +5,7 @@ import { Bot } from '../bot';
 
 const router = express.Router();
 const MESSAGES_FILE = path.join(__dirname, '../models/messages.json');
-const bot = Bot.getInstance();
+const bot = new Bot();
 
 interface Message {
   id: string;
