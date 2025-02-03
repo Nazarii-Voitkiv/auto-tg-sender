@@ -1,1 +1,21 @@
-<p>dashboard works!</p>
+<div class="dashboard-container">
+  <mat-card>
+    <form [formGroup]="envForm" (ngSubmit)="saveEnvVars()" class="dashboard-form">
+      <h2 class="text-center">Змінні середовища</h2>
+      
+      <mat-form-field appearance="fill" class="env-input">
+        <mat-label>Токен бота</mat-label>
+        <input matInput formControlName="BOT_TOKEN" placeholder="Введіть токен Telegram бота">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="env-input">
+        <mat-label>URL веб-додатку</mat-label>
+        <input matInput formControlName="WEBAPP_URL" placeholder="Введіть URL веб-додатку">
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="!envForm.valid" class="full-width-button">
+        Зберегти налаштування
+      </button>
+    </form>
+  </mat-card>
+</div>

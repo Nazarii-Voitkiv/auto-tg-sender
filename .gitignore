@@ -3,3 +3,7 @@
 backend/.env
 frontend/.env
 /frontend/.vscode
+/backend/node_modules
+backend/package-lock.json
+/frontend/.angular
+/frontend/node_modules

@@ -1,0 +1,21 @@
+<div class="settings-container">
+  <mat-card>
+    <form [formGroup]="envForm" (ngSubmit)="saveEnvVars()" class="settings-form">
+      <h2>Environment Variables</h2>
+      
+      <mat-form-field appearance="fill" class="env-input">
+        <mat-label>Bot Token</mat-label>
+        <input matInput formControlName="BOT_TOKEN" placeholder="Enter Telegram Bot Token">
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="env-input">
+        <mat-label>WebApp URL</mat-label>
+        <input matInput formControlName="WEBAPP_URL" placeholder="Enter WebApp URL">
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="!envForm.valid" class="full-width-button">
+        Save Settings
+      </button>
+    </form>
+  </mat-card>
+</div>

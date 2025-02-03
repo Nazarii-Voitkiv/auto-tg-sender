@@ -1,4 +1,4 @@
-.dashboard-container {
+.settings-container {
   padding: 20px;
   max-width: 800px;
   margin: 0 auto;
@@ -6,7 +6,7 @@
   box-sizing: border-box;
   overflow-x: hidden;
 
-  .dashboard-form {
+  .settings-form {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -16,8 +16,6 @@
       color: #ffffff;
       margin: 0;
       padding: 16px 0;
-      text-align: center;
-      width: 100%;
     }
 
     .env-input {
@@ -66,12 +64,5 @@ mat-card {
 
   .mat-mdc-form-field-infix {
     padding-left: 16px !important;
-  }
-
-  // Стилі для snackbar
-  .mat-mdc-snack-bar-container {
-    &.mat-mdc-snack-bar-center {
-      text-align: center;
-    }
   }
 }

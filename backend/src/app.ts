@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import messagesRouter from './routes/messages';
 import groupsRouter from './routes/groups';
+import envRouter from './routes/env';
 import { Bot } from './bot';
 
 const app = express();
@@ -30,6 +31,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/messages', messagesRouter);
 app.use('/api/groups', groupsRouter);
+app.use('/api/env', envRouter);
 
 const PORT = process.env.PORT || 3000;
 

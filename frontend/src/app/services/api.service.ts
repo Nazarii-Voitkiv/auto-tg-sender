@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Message } from '../interfaces/message.interface';
 import { Group } from '../interfaces/group.interface';
+import { EnvVars } from '../interfaces/env.interface';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -54,6 +55,21 @@ export class ApiService {
     console.log('Deleting group:', id);
     return this.http.delete<void>(`${this.API_URL}/groups/${id}`).pipe(
       tap(() => console.log('Deleted group:', id))
+    );
+  }
+
+  // Environment Variables
+  getEnvVars(): Observable<EnvVars> {
+    console.log('Getting env vars...');
+    return this.http.get<EnvVars>(`${this.API_URL}/env`).pipe(
+      tap(vars => console.log('Received env vars:', vars))
+    );
+  }
+
+  updateEnvVars(vars: EnvVars): Observable<EnvVars> {
+    console.log('Updating env vars:', vars);
+    return this.http.post<EnvVars>(`${this.API_URL}/env`, vars).pipe(
+      tap(updatedVars => console.log('Updated env vars:', updatedVars))
     );
   }
 }
