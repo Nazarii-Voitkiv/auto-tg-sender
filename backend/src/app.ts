@@ -4,15 +4,18 @@ import messagesRouter from './routes/messages';
 import groupsRouter from './routes/groups';
 import envRouter from './routes/env';
 import { Bot } from './bot';
+import { FRONTEND_URL, FRONTEND_PROD_URL } from './config';
 
 const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  origin: [
+    FRONTEND_URL,
+    FRONTEND_PROD_URL
+  ].filter(Boolean), // Видаляємо порожні значення
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware
