@@ -2,6 +2,7 @@ import { Telegraf } from "telegraf";
 import dotenv from "dotenv";
 import supabase from "./supabase";
 import scheduler from "./scheduler";
+import { getAuthenticatedClient } from "./telegramService";
 
 dotenv.config();
 
@@ -20,7 +21,6 @@ bot.start((ctx) => ctx.reply(
   "/resume - відновити розсилку\n" +
   "/stats - показати статистику"
 ));
-
 
 // Додавання повідомлення
 bot.command("addmessage", async (ctx) => {
@@ -228,14 +228,57 @@ bot.command("stats", async (ctx) => {
   }
 });
 
-// Запуск бота
+// Функція запуску бота
 async function startBot() {
-  console.log('Запуск бота...');
+  console.log("Запуск бота...");
+  
   try {
+    // Check database first
+    console.log("📊 Перевірка бази даних...");
+    const { data: messages, error: messagesError } = await supabase.from("messages").select();
+    const { data: groups, error: groupsError } = await supabase.from("groups").select();
+
+    if (messagesError || groupsError) {
+      console.error('❌ Помилка перевірки бази даних:', { messagesError, groupsError });
+      process.exit(1);
+    }
+
+    console.log(`📊 В базі даних знайдено: ${messages?.length || 0} повідомлень та ${groups?.length || 0} груп`);
+
+    // Authenticate with Telegram first
+    console.log("🔐 Authenticating with Telegram...");
+    await getAuthenticatedClient();
+    console.log("✅ Authentication successful!");
+
+    // Launch the bot first
     await bot.launch();
-    console.log('🤖 Бот успішно запущено!');
+    console.log("🤖 Бот успішно запущено!");
+    
+    // Start immediate sending if we have messages and groups
+    if (messages?.length && groups?.length) {
+      console.log("📨 Запуск першої розсилки...");
+      await scheduler.sendNow();
+    } else {
+      console.log("⚠️ Розсилка не почалась: немає повідомлень або груп в базі даних");
+    }
+    
+    // Start the scheduler after successful sending
+    console.log("📅 Запуск планувальника...");
+    scheduler.start();
+    
+    // Enable graceful stop
+    process.once('SIGINT', () => {
+      console.log('🛑 Stopping bot...');
+      bot.stop('SIGINT');
+      scheduler.pause();
+    });
+    process.once('SIGTERM', () => {
+      console.log('🛑 Stopping bot...');
+      bot.stop('SIGTERM');
+      scheduler.pause();
+    });
   } catch (error) {
-    console.error('❌ Помилка запуску бота:', error);
+    console.error("❌ Failed to start bot:", error);
     process.exit(1);
   }
 }

@@ -18,7 +18,7 @@ const apiHash = process.env.TELEGRAM_API_HASH;
 
 console.log('📱 Using Telegram API credentials:', { apiId });
 
-let client: TelegramClient;
+let client: TelegramClient | null = null;
 
 // Create readline interface for user input
 const rl = createInterface({
@@ -36,41 +36,45 @@ const question = (query: string): Promise<string> => {
 
 async function initializeClient() {
   console.log('🔑 Initializing Telegram client...');
+  try {
+    const stringSession = new StringSession(""); // Always start with a new session
+    console.log('📡 Creating new Telegram client...');
+    client = new TelegramClient(stringSession, parseInt(apiId), apiHash, {
+      connectionRetries: 5,
+    });
+    
+    console.log('🔐 Starting authentication process...');
+    await client.start({
+      phoneNumber: async () => {
+        console.log('📞 Requesting phone number...');
+        return await question("Please enter your phone number: ");
+      },
+      password: async () => {
+        console.log('🔒 Requesting password (if 2FA enabled)...');
+        return await question("Please enter your password: ");
+      },
+      phoneCode: async () => {
+        console.log('🔑 Requesting verification code...');
+        return await question("Please enter the code you received: ");
+      },
+      onError: (err) => {
+        console.error('❌ Authentication error:', err);
+      },
+    });
+    console.log("✅ Successfully connected to Telegram!");
+    
+    return client;
+  } catch (error) {
+    console.error('❌ Error initializing client:', error);
+    client = null; // Reset client on error
+    throw error;
+  }
+}
+
+// Function to ensure we have an authenticated client
+export async function getAuthenticatedClient() {
   if (!client) {
-    try {
-      const stringSession = new StringSession(""); // You can save the session string to reuse it
-      console.log('📡 Creating new Telegram client...');
-      client = new TelegramClient(stringSession, parseInt(apiId), apiHash, {
-        connectionRetries: 5,
-      });
-      
-      console.log('🔐 Starting authentication process...');
-      await client.start({
-        phoneNumber: async () => {
-          console.log('📞 Requesting phone number...');
-          return await question("Please enter your phone number: ");
-        },
-        password: async () => {
-          console.log('🔒 Requesting password (if 2FA enabled)...');
-          return await question("Please enter your password: ");
-        },
-        phoneCode: async () => {
-          console.log('🔑 Requesting verification code...');
-          return await question("Please enter the code you received: ");
-        },
-        onError: (err) => {
-          console.error('❌ Authentication error:', err);
-        },
-      });
-      console.log("✅ Successfully connected to Telegram!");
-      
-      // Save the session for future use
-      const sessionString = client.session.save();
-      console.log('💾 Session saved:', sessionString);
-    } catch (error) {
-      console.error('❌ Error initializing client:', error);
-      throw error;
-    }
+    return await initializeClient();
   }
   return client;
 }
@@ -85,7 +89,7 @@ interface SendStats {
 async function validateGroup(groupId: string): Promise<boolean> {
   try {
     console.log(`🔍 Validating group ${groupId}...`);
-    const client = await initializeClient();
+    const client = await getAuthenticatedClient();
     const entity = await client.getEntity(groupId);
     console.log(`✅ Group ${groupId} is valid:`, entity);
     return !!entity;
@@ -96,116 +100,120 @@ async function validateGroup(groupId: string): Promise<boolean> {
 }
 
 export const sendMessages = async () => {
-  console.log('📨 Starting message sending process...');
-  
-  const { data: messages, error: messagesError } = await supabase.from("messages").select();
-  const { data: groups, error: groupsError } = await supabase.from("groups").select();
+  try {
+    // Get authenticated client first
+    const client = await getAuthenticatedClient();
+    
+    console.log('📨 Starting message sending process...');
+    
+    const { data: messages, error: messagesError } = await supabase.from("messages").select();
+    const { data: groups, error: groupsError } = await supabase.from("groups").select();
 
-  if (messagesError) {
-    console.error('❌ Error fetching messages:', messagesError);
-    return;
-  }
-  if (groupsError) {
-    console.error('❌ Error fetching groups:', groupsError);
-    return;
-  }
-
-  console.log(`📊 Found ${messages?.length || 0} messages and ${groups?.length || 0} groups`);
-
-  if (!messages || !groups || messages.length === 0 || groups.length === 0) {
-    console.log("❌ Немає повідомлень або груп для відправки.");
-    return;
-  }
-
-  // Initialize Telegram client
-  console.log('🔄 Initializing client for sending...');
-  const client = await initializeClient();
-
-  // Валідація груп перед відправкою
-  const validGroups = [];
-  for (const group of groups) {
-    if (await validateGroup(group.group_id)) {
-      validGroups.push(group);
-    } else {
-      console.log(`⚠️ Група ${group.group_id} недоступна.`);
-      await supabase.from("groups").delete().eq("group_id", group.group_id);
+    if (messagesError) {
+      console.error('❌ Error fetching messages:', messagesError);
+      return;
     }
-  }
-
-  console.log(`✅ Found ${validGroups.length} valid groups`);
-
-  if (validGroups.length === 0) {
-    console.log("❌ Немає доступних груп для відправки.");
-    return;
-  }
-
-  const stats: SendStats[] = [];
-
-  for (const group of validGroups) {
-    try {
-      if (!group.group_id) {
-        console.error('❌ Пропуск групи: відсутній group_id');
-        continue;
-      }
-
-      const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-      console.log(`📝 Selected random message:`, randomMessage);
-      
-      // Перевірка на дублікати
-      const { data: recentSends } = await supabase
-        .from("send_logs")
-        .select()
-        .eq("group_id", group.group_id)
-        .eq("message_id", randomMessage.id)
-        .gte("sentAt", new Date(Date.now() - 24 * 60 * 60 * 1000));
-
-      if (recentSends && recentSends.length > 0) {
-        console.log(`⚠️ Пропуск дубліката для групи ${group.group_id}`);
-        continue;
-      }
-
-      console.log(`📣 Спроба відправки в групу ${group.group_id}...`);
-      
-      // Send message using Telegram user API
-      const result = await client.sendMessage(group.group_id, { message: randomMessage.text });
-      console.log(`📨 Message sent, result:`, result);
-
-      // Логування відправки
-      const { error: logError } = await supabase.from("send_logs").insert([{
-        group_id: group.group_id,
-        message_id: randomMessage.id,
-        sent_at: new Date(),
-        success: true
-      }]);
-
-      if (logError) {
-        console.error('❌ Error logging message send:', logError);
-      }
-
-      stats.push({
-        groupId: group.group_id,
-        messageId: randomMessage.id,
-        sentAt: new Date(),
-        success: true
-      });
-
-      console.log(`✅ Повідомлення відправлено в групу ${group.group_id}`);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`❌ Помилка надсилання в групу ${group.group_id}:`, errorMessage);
-      console.error('Full error:', error);
-      
-      stats.push({
-        groupId: group.group_id,
-        messageId: -1,
-        sentAt: new Date(),
-        success: false
-      });
+    if (groupsError) {
+      console.error('❌ Error fetching groups:', groupsError);
+      return;
     }
+
+    console.log(`📊 Found ${messages?.length || 0} messages and ${groups?.length || 0} groups`);
+
+    if (!messages || !groups || messages.length === 0 || groups.length === 0) {
+      console.log("❌ Немає повідомлень або груп для відправки.");
+      return;
+    }
+
+    // Валідація груп перед відправкою
+    const validGroups = [];
+    for (const group of groups) {
+      if (await validateGroup(group.group_id)) {
+        validGroups.push(group);
+      } else {
+        console.log(`⚠️ Група ${group.group_id} недоступна.`);
+        await supabase.from("groups").delete().eq("group_id", group.group_id);
+      }
+    }
+
+    console.log(`✅ Found ${validGroups.length} valid groups`);
+
+    if (validGroups.length === 0) {
+      console.log("❌ Немає доступних груп для відправки.");
+      return;
+    }
+
+    const stats: SendStats[] = [];
+
+    for (const group of validGroups) {
+      try {
+        if (!group.group_id) {
+          console.error('❌ Пропуск групи: відсутній group_id');
+          continue;
+        }
+
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        console.log(`📝 Selected random message:`, randomMessage);
+        
+        // Перевірка на дублікати
+        const { data: recentSends } = await supabase
+          .from("send_logs")
+          .select()
+          .eq("group_id", group.group_id)
+          .eq("message_id", randomMessage.id)
+          .gte("sentAt", new Date(Date.now() - 24 * 60 * 60 * 1000));
+
+        if (recentSends && recentSends.length > 0) {
+          console.log(`⚠️ Пропуск дубліката для групи ${group.group_id}`);
+          continue;
+        }
+
+        console.log(`📣 Спроба відправки в групу ${group.group_id}...`);
+        
+        // Send message using Telegram user API
+        const result = await client.sendMessage(group.group_id, { message: randomMessage.text });
+        console.log(`📨 Message sent, result:`, result);
+
+        // Логування відправки
+        const { error: logError } = await supabase.from("send_logs").insert([{
+          group_id: group.group_id,
+          message_id: randomMessage.id,
+          sent_at: new Date(),
+          success: true
+        }]);
+
+        if (logError) {
+          console.error('❌ Error logging message send:', logError);
+        }
+
+        stats.push({
+          groupId: group.group_id,
+          messageId: randomMessage.id,
+          sentAt: new Date(),
+          success: true
+        });
+
+        console.log(`✅ Повідомлення відправлено в групу ${group.group_id}`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`❌ Помилка надсилання в групу ${group.group_id}:`, errorMessage);
+        console.error('Full error:', error);
+        
+        stats.push({
+          groupId: group.group_id,
+          messageId: -1,
+          sentAt: new Date(),
+          success: false
+        });
+      }
+    }
+
+    // Close readline interface
+    rl.close();
+
+    return stats;
+  } catch (error) {
+    console.error('❌ Error sending messages:', error);
+    client = null; // Reset client on error to force re-authentication
   }
-
-  // Close readline interface
-  rl.close();
-
-  return stats;
 };

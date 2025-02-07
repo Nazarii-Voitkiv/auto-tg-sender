@@ -8,7 +8,6 @@ class MessageScheduler {
 
   constructor() {
     console.log('📅 Створення планувальника...');
-    this.start(); // Автоматично запускаємо планувальник
   }
 
   private getRandomInterval(): number {
@@ -18,23 +17,35 @@ class MessageScheduler {
   private async scheduleNext() {
     if (!this.running) return;
 
-    try {
-      await sendMessages();
-    } catch (error) {
-      console.error('❌ Помилка при відправці повідомлень:', error);
-    }
-
     const nextInterval = this.getRandomInterval();
     console.log(`⏰ Наступна розсилка через ${nextInterval / 60000} хвилин`);
     
-    this.timer = setTimeout(() => this.scheduleNext(), nextInterval);
+    this.timer = setTimeout(async () => {
+      try {
+        await sendMessages();
+        this.scheduleNext(); // Schedule next only after successful sending
+      } catch (error) {
+        console.error('❌ Помилка при відправці повідомлень:', error);
+        this.scheduleNext(); // Still schedule next even if there was an error
+      }
+    }, nextInterval);
+  }
+
+  public async sendNow() {
+    try {
+      console.log('📨 Відправка повідомлень...');
+      await sendMessages();
+      console.log('✅ Повідомлення відправлені');
+    } catch (error) {
+      console.error('❌ Помилка при відправці повідомлень:', error);
+    }
   }
 
   public start() {
     if (!this.running) {
       this.running = true;
-      this.scheduleNext();
       console.log('▶️ Планувальник запущено');
+      this.scheduleNext(); // Only schedule next, don't send immediately
     }
   }
 
