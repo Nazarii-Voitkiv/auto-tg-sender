@@ -6,24 +6,30 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "bot": "ts-node src/bot.ts",
+    "bot": "NODE_NO_WARNINGS=1 ts-node src/bot.ts",
     "build": "tsc"
   },
-  "keywords": ["telegram", "bot", "supabase", "express"],
+  "keywords": [
+    "telegram",
+    "bot",
+    "supabase",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.18.2",
-    "dotenv": "^16.3.1",
+    "@supabase/supabase-js": "^2.39.1",
     "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
     "telegraf": "^4.15.3",
-    "@supabase/supabase-js": "^2.39.1"
+    "telegram": "^2.26.16"
   },
   "devDependencies": {
-    "typescript": "^5.3.3",
-    "ts-node": "^10.9.2",
-    "@types/node": "^20.10.5",
     "@types/express": "^4.17.21",
-    "nodemon": "^3.0.2"
+    "@types/node": "^20.10.5",
+    "nodemon": "^3.0.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
   }
 }
