@@ -1,12 +1,5 @@
 
 .DS_Store
-backend/.env
-frontend/.env
-/frontend/.vscode
-/backend/node_modules
-backend/package-lock.json
-/frontend/.angular
-/frontend/node_modules
 /dist
 /node_modules
 .env
