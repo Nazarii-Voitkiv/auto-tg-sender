@@ -7,3 +7,5 @@ frontend/.env
 backend/package-lock.json
 /frontend/.angular
 /frontend/node_modules
+/dist
+/node_modules
