@@ -7,6 +7,15 @@ import { getAuthenticatedClient } from "./telegramService";
 dotenv.config();
 
 const bot = new Telegraf(process.env.BOT_TOKEN as string);
+const ADMIN_ID = process.env.ADMIN_ID;
+
+// Middleware для перевірки адміністратора
+bot.use((ctx, next) => {
+  if (ctx.from?.id.toString() === ADMIN_ID) {
+    return next();
+  }
+  return ctx.reply("❌ У вас немає доступу до цього бота.");
+});
 
 bot.start((ctx) => ctx.reply(
   "👋 Вітаю! Доступні команди:\n" +
