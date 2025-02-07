@@ -28,6 +28,7 @@ bot.start((ctx) => ctx.reply(
   "/setinterval [min] [max] - встановити інтервал розсилки\n" +
   "/pause - призупинити розсилку\n" +
   "/resume - відновити розсилку\n" +
+  "/sendnow - надіслати повідомлення зараз\n" +
   "/stats - показати статистику"
 ));
 
@@ -207,34 +208,44 @@ bot.command("resume", (ctx) => {
   ctx.reply("▶️ Розсилку відновлено");
 });
 
+// Надіслати повідомлення зараз
+bot.command("sendnow", async (ctx) => {
+  try {
+    await scheduler.sendNow();
+    ctx.reply("✅ Повідомлення надіслано успішно");
+  } catch (error) {
+    console.error('Помилка при надсиланні повідомлень:', error);
+    ctx.reply('❌ Помилка при надсиланні повідомлень');
+  }
+});
+
 // Статистика
 bot.command("stats", async (ctx) => {
-  try {
-    const { data: messages, error: messagesError } = await supabase
-      .from('messages')
-      .select('count');
-    
-    const { data: groups, error: groupsError } = await supabase
-      .from('groups')
-      .select('count');
-    
-    const { data: logs, error: logsError } = await supabase
-      .from('send_logs')
-      .select('count');
+  const { data: messageCount } = await supabase
+    .from('messages')
+    .select('id', { count: 'exact' });
 
-    if (messagesError || groupsError || logsError) throw new Error('Помилка отримання статистики');
+  const { data: groupCount } = await supabase
+    .from('groups')
+    .select('id', { count: 'exact' });
 
-    const stats = `📊 Статистика:\n\n` +
-      `📝 Повідомлень: ${messages[0].count}\n` +
-      `👥 Груп: ${groups[0].count}\n` +
-      `📨 Всього відправлено: ${logs[0].count}\n` +
-      `⏱️ Статус розсилки: ${scheduler.isRunning() ? '▶️ Активна' : '⏸️ Призупинена'}`;
+  const { data: logCount } = await supabase
+    .from('send_logs')
+    .select('id', { count: 'exact' });
 
-    ctx.reply(stats);
-  } catch (error) {
-    console.error('Помилка отримання статистики:', error);
-    ctx.reply('❌ Помилка при отриманні статистики');
-  }
+  const nextSendTime = scheduler.getNextSendTime();
+  const nextSendTimeText = nextSendTime 
+    ? `\nНаступна розсилка: ${nextSendTime.toLocaleString()}`
+    : '\nРозсилку призупинено';
+
+  ctx.reply(
+    "📊 Статистика:\n" +
+    `Повідомлень: ${messageCount?.length ?? 0}\n` +
+    `Груп: ${groupCount?.length ?? 0}\n` +
+    `Всього надіслано: ${logCount?.length ?? 0}` +
+    `\nСтатус: ${scheduler.isRunning() ? '▶️ Працює' : '⏸️ Призупинено'}` +
+    nextSendTimeText
+  );
 });
 
 // Функція запуску бота

@@ -99,6 +99,21 @@ async function validateGroup(groupId: string): Promise<boolean> {
   }
 }
 
+// Функція для випадкової затримки між повідомленнями (10-15 секунд)
+const getRandomDelay = (): number => {
+  return Math.floor(Math.random() * (15000 - 10000 + 1) + 10000); // 10000-15000 ms
+};
+
+// Функція для перемішування масиву
+const shuffleArray = <T>(array: T[]): T[] => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
 export const sendMessages = async () => {
   try {
     // Get authenticated client first
@@ -145,7 +160,10 @@ export const sendMessages = async () => {
 
     const stats: SendStats[] = [];
 
-    for (const group of validGroups) {
+    // Перемішуємо групи для випадкового порядку відправки
+    const shuffledGroups = shuffleArray(validGroups);
+
+    for (const group of shuffledGroups) {
       try {
         if (!group.group_id) {
           console.error('❌ Пропуск групи: відсутній group_id');
@@ -194,6 +212,13 @@ export const sendMessages = async () => {
         });
 
         console.log(`✅ Повідомлення відправлено в групу ${group.group_id}`);
+
+        // Випадкова затримка перед наступним повідомленням
+        if (shuffledGroups.indexOf(group) < shuffledGroups.length - 1) {
+          const delay = getRandomDelay();
+          console.log(`⏳ Очікування ${delay/1000} секунд перед наступною відправкою...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error(`❌ Помилка надсилання в групу ${group.group_id}:`, errorMessage);

@@ -5,6 +5,7 @@ class MessageScheduler {
   private minInterval: number = 30; // за замовчуванням 30 хвилин
   private maxInterval: number = 60; // за замовчуванням 60 хвилин
   private running: boolean = false;
+  private nextSendTime: Date | null = null;
 
   constructor() {
     console.log('📅 Створення планувальника...');
@@ -18,6 +19,7 @@ class MessageScheduler {
     if (!this.running) return;
 
     const nextInterval = this.getRandomInterval();
+    this.nextSendTime = new Date(Date.now() + nextInterval);
     console.log(`⏰ Наступна розсилка через ${nextInterval / 60000} хвилин`);
     
     this.timer = setTimeout(async () => {
@@ -36,6 +38,14 @@ class MessageScheduler {
       console.log('📨 Відправка повідомлень...');
       await sendMessages();
       console.log('✅ Повідомлення відправлені');
+      
+      // Якщо планувальник запущений, оновлюємо час наступної відправки
+      if (this.running) {
+        if (this.timer) {
+          clearTimeout(this.timer);
+        }
+        this.scheduleNext();
+      }
     } catch (error) {
       console.error('❌ Помилка при відправці повідомлень:', error);
     }
@@ -45,7 +55,7 @@ class MessageScheduler {
     if (!this.running) {
       this.running = true;
       console.log('▶️ Планувальник запущено');
-      this.scheduleNext(); // Only schedule next, don't send immediately
+      this.scheduleNext();
     }
   }
 
@@ -55,6 +65,7 @@ class MessageScheduler {
       this.timer = null;
     }
     this.running = false;
+    this.nextSendTime = null;
     console.log('⏸️ Планувальник призупинено');
   }
 
@@ -73,10 +84,24 @@ class MessageScheduler {
     this.minInterval = min;
     this.maxInterval = max;
     console.log(`⚙️ Встановлено новий інтервал: ${min}-${max} хвилин`);
+
+    // Якщо планувальник запущений, оновлюємо розклад
+    if (this.running) {
+      if (this.timer) {
+        clearTimeout(this.timer);
+        this.timer = null;
+      }
+      this.scheduleNext();
+      console.log('🔄 Розклад оновлено з новим інтервалом');
+    }
   }
 
   public isRunning(): boolean {
     return this.running;
+  }
+
+  public getNextSendTime(): Date | null {
+    return this.nextSendTime;
   }
 }
 
