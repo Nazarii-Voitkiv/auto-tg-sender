@@ -271,7 +271,7 @@ async function startBot() {
     console.log("✅ Authentication successful!");
 
     // Launch the bot first
-    await bot.launch();
+    // await bot.launch();
     console.log("🤖 Бот успішно запущено!");
     
     // Start immediate sending if we have messages and groups
