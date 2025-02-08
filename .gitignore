@@ -3,5 +3,6 @@
 /dist
 /node_modules
 .env
+telegram-session.txt
 /.idea
 package-lock.json

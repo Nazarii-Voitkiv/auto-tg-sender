@@ -34,11 +34,42 @@ const question = (query: string): Promise<string> => {
   });
 };
 
+import * as fs from 'fs';
+import * as path from 'path';
+
+const SESSION_FILE = path.join(process.cwd(), 'telegram-session.txt');
+
+// Функція для читання сесії з файлу
+function loadSession(): string {
+  try {
+    if (fs.existsSync(SESSION_FILE)) {
+      const session = fs.readFileSync(SESSION_FILE, 'utf-8');
+      return session.trim();
+    }
+  } catch (error) {
+    console.error('❌ Error loading session:', error);
+  }
+  return '';
+}
+
+// Функція для збереження сесії у файл
+function saveSession(session: string) {
+  try {
+    fs.writeFileSync(SESSION_FILE, session);
+    console.log('💾 Session saved successfully');
+  } catch (error) {
+    console.error('❌ Error saving session:', error);
+  }
+}
+
 async function initializeClient() {
   console.log('🔑 Initializing Telegram client...');
   try {
-    const stringSession = new StringSession(""); // Always start with a new session
-    console.log('📡 Creating new Telegram client...');
+    const savedSession = loadSession();
+    const stringSession = new StringSession(savedSession);
+    
+    console.log(savedSession ? '📱 Using saved session...' : '📡 Creating new session...');
+    
     client = new TelegramClient(stringSession, parseInt(apiId), apiHash, {
       connectionRetries: 5,
     });
@@ -61,8 +92,12 @@ async function initializeClient() {
         console.error('❌ Authentication error:', err);
       },
     });
-    console.log("✅ Successfully connected to Telegram!");
+
+    // Зберігаємо сесію після успішної автентифікації
+    const sessionString = client.session.save() as unknown as string;
+    saveSession(sessionString);
     
+    console.log("✅ Successfully connected to Telegram!");
     return client;
   } catch (error) {
     console.error('❌ Error initializing client:', error);
